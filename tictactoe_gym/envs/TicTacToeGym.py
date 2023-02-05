@@ -4,11 +4,19 @@ import numpy as np
 from gym import spaces
 
 class TicTacToeEnv(gym.Env):
-    """Tic-Tac-Toe Environment that follows Open AI Gym interface"""
+    """
+    Tic-Tac-Toe Environment that follows Open AI Gym interface
+    
+    """
 
     def __init__(self, render_mode = None, size = 3):
+        """
+        Initialize the environment with render mode and size.
 
-        #Define variables needed for rendering
+        Parameters:
+        render_mode (str): The render mode, either "human" or None.
+        size (int): The size of the tic-tac-toe board. Currently only works with 3.
+        """
         self.render_mode = render_mode
         self.window = None
         self.clock = None
@@ -16,19 +24,28 @@ class TicTacToeEnv(gym.Env):
         #Currently will only work with default size but plan to extend to any size in future updates
         self.size = size
 
-        #Define observation and action spaces
         self.observation_space = spaces.Box(low = -1, high = 1, shape = (self.size * self.size,), dtype = int)
         self.action_space = spaces.Discrete(size*size)
         
-        #Initialize game
         self.state = np.zeros(9)
         self.current_player = 1
 
     def _get_obs(self):
-        """Private function to get observation (size x size) from flattened state"""
+        """
+        Get the observation (size x size) from the flattened state.
+
+        Returns:
+        observation (ndarray): The observation of the environment.
+        """
         return np.reshape(self.state, (-1,self.size))
 
     def reset(self):
+        """
+        Reset the environment.
+
+        Returns:
+        observation (ndarray): The observation of the environment.
+        """
         self.state = np.zeros(9)
         observation = self._get_obs()
         self.current_player = 1
@@ -39,7 +56,12 @@ class TicTacToeEnv(gym.Env):
         return observation
 
     def _is_game_over(self):
-        #Check if game is over
+        """
+        Check if the game is over.
+
+        Returns:
+        result (bool): True if the game is over, False otherwise.
+        """
         for i in range(self.size):
             if abs(np.sum(self.state[i*self.size:(i+1)*self.size])) == self.size:
                 return True
@@ -58,6 +80,12 @@ class TicTacToeEnv(gym.Env):
         return False
 
     def _result(self):
+        """
+        Get the result of the game.
+
+        Returns:
+        result (int): 1 if player 1 wins, -1 if player 2 wins, 0 if draw.
+        """
         if self._is_game_over():
             if np.sum(np.abs(self.state)) == self.size*self.size:
                 return 0
@@ -69,7 +97,23 @@ class TicTacToeEnv(gym.Env):
         else:
             return 0
 
+    def _get_info(self):
+        return {"info": False }
+
     def step(self, action):
+        """
+        Take a step in the environment and return the new observation, reward, if the game is terminated, and additional information.
+
+        Parameters:
+        action (int): The action to take in the environment.
+
+        Returns:
+        observation (numpy.ndarray): The observation of the environment after taking the action.
+        reward (int): The reward for taking the action.
+        terminated (bool): Whether the game is terminated or not.
+        info (bool): Additional information, always False in this case.
+        """
+        
         assert self.action_space.contains(action)
         
         if self.state[action] == 0:
@@ -85,31 +129,39 @@ class TicTacToeEnv(gym.Env):
         if self.render_mode == "human":
             self.render()
 
-        return observation, reward, terminated, False
+        info = self._get_info()
 
-    def render(self):
-            if self.window is None:
-                pygame.init()
-                width = 300
-                height = 300
-                self.window = pygame.display.set_mode((width, height))
+        return observation, reward, terminated, False, info
+
+    def render(self, frame_rate = 0.5):
+        """
+        Render the current state of the environment in human-readable form.
+        """
+        if self.window is None:
+            pygame.init()
+            width = 300
+            height = 300
+            self.window = pygame.display.set_mode((width, height))
             
-            if self.clock is None:
-                self.clock = pygame.time.Clock()
+        if self.clock is None:
+            self.clock = pygame.time.Clock()
            
 
-            self.draw_grid()
-            self.draw_markers()
+        self.draw_grid()
+        self.draw_markers()
 
-            pygame.event.pump()
-            pygame.display.update()
+        pygame.event.pump()
+        pygame.display.update()
 
-            self.clock.tick(1)
+        self.clock.tick(frame_rate)
 
-            self.close()
+        self.close()
 
         
     def draw_grid(self):
+        """
+        Draw the tic-tac-toe grid on the pygame window.
+        """
         bg = (255, 255, 255)
         grid = (50, 50, 50)
         self.window.fill(bg)
@@ -119,6 +171,11 @@ class TicTacToeEnv(gym.Env):
             pygame.draw.line(self.window, grid, (x*100, 0), (x*100, 300), 3)
 
     def draw_markers(self):
+        """
+        Draw the markers for the current state on the tic-tac-toe board.
+
+        Markers for player 1 (X) will be green and markers for player 2 (O) will be red.
+        """
         x_pos = 0
         for x in self._get_obs():
             y_pos = 0
@@ -132,6 +189,9 @@ class TicTacToeEnv(gym.Env):
             x_pos += 1
 
     def close(self):
+        """
+        Close the pygame window if it exists.
+        """
         if self.window is not None:
             pygame.quit()
             self.window = None

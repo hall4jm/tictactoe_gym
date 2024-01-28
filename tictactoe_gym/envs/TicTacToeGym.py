@@ -132,6 +132,30 @@ class TicTacToeEnv(gym.Env):
         info = self._get_info()
 
         return observation, reward, terminated, False, info
+    
+    def run(self, agent1, agent2, render_mode = None):
+        """
+        Run a game between two agents.
+
+        Parameters:
+        agent1 (Agent): The first agent to play the game.
+        agent2 (Agent): The second agent to play the game.
+
+        Returns:
+        result (int): 1 if player 1 wins, -1 if player 2 wins, 0 if draw.
+        """
+        self.reset()
+        while not self._is_game_over():
+            if self.current_player == 1:
+                action = agent1.get_action(self.state)
+            else:
+                action = agent2.get_action(self.state)
+            self.step(action)
+
+            if render_mode == "human":
+                self.render()
+                
+        return self._result()
 
     def render(self, frame_rate = 0.5):
         """
